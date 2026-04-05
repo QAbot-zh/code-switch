@@ -310,6 +310,12 @@
                 <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
             </button>
+            <button class="ghost-icon" :data-tooltip="t('components.main.form.actions.copy')" @click="duplicateCard(card)">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
             <button class="ghost-icon" @click="requestRemove(card)">
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path
@@ -340,7 +346,6 @@
                     type="text"
                     :placeholder="t('components.main.form.placeholders.name')"
                     required
-                    :disabled="Boolean(modalState.editingId)"
                   />
                 </label>
 
@@ -1118,6 +1123,7 @@ const submitModal = () => {
 
   if (editingCard.value) {
     Object.assign(editingCard.value, {
+      name: name || editingCard.value.name,
       apiUrl: apiUrl || editingCard.value.apiUrl,
       apiKey,
       officialSite,
@@ -1166,6 +1172,20 @@ const requestRemove = (card: AutomationCard) => {
   confirmState.card = card
   confirmState.tabId = activeTab.value
   confirmState.open = true
+}
+
+const duplicateCard = (card: AutomationCard) => {
+  const tabId = activeTab.value
+  const list = cards[tabId]
+  if (!list) return
+  const newCard: AutomationCard = {
+    ...card,
+    id: Date.now(),
+    name: `${card.name} (copy)`,
+    enabled: false,
+  }
+  list.push(newCard)
+  void persistProviders(tabId)
 }
 
 const confirmRemove = () => {

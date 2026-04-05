@@ -124,7 +124,8 @@
         "actions": {
           "cancel": "取消",
           "save": "保存",
-          "delete": "删除"
+          "delete": "删除",
+          "copy": "复制供应商"
         },
         "switch": {
           "on": "已启用",
