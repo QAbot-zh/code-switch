@@ -395,8 +395,16 @@
                         </svg>
                       </ListboxButton>
                       <ListboxOptions v-if="open" class="icon-select-options">
+                        <div class="icon-select-search">
+                          <input
+                            v-model="iconSearchQuery"
+                            type="text"
+                            :placeholder="t('components.main.form.placeholders.iconSearch') || '搜索图标...'"
+                            @click.stop
+                          />
+                        </div>
                         <ListboxOption
-                          v-for="iconName in iconOptions"
+                          v-for="iconName in filteredIconOptions"
                           :key="iconName"
                           :value="iconName"
                           v-slot="{ active, selected }"
@@ -1043,6 +1051,13 @@ type VendorForm = {
 
 const iconOptions = Object.keys(lobeIcons).sort((a, b) => a.localeCompare(b))
 const defaultIconKey = iconOptions[0] ?? 'aicoding'
+const iconSearchQuery = ref('')
+
+const filteredIconOptions = computed(() => {
+  if (!iconSearchQuery.value) return iconOptions
+  const query = iconSearchQuery.value.toLowerCase()
+  return iconOptions.filter((name) => name.toLowerCase().includes(query))
+})
 
 const defaultFormValues = (): VendorForm => ({
   name: '',
@@ -1074,6 +1089,7 @@ const openCreateModal = () => {
   editingCard.value = null
   Object.assign(modalState.form, defaultFormValues())
   modalState.errors.apiUrl = ''
+  iconSearchQuery.value = ''
   modalState.open = true
 }
 
@@ -1092,6 +1108,7 @@ const openEditModal = (card: AutomationCard) => {
     modelMapping: card.modelMapping || {},
   })
   modalState.errors.apiUrl = ''
+  iconSearchQuery.value = ''
   modalState.open = true
 }
 

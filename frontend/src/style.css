@@ -1445,6 +1445,29 @@ html.dark .btn-ghost:focus-visible {
   box-shadow: 0 20px 45px rgba(0, 0, 0, 0.18);
 }
 
+.icon-select-search {
+  padding: 8px;
+  border-bottom: 1px solid var(--mac-border);
+  position: sticky;
+  top: 0;
+  background: var(--mac-surface);
+}
+
+.icon-select-search input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--mac-border);
+  border-radius: 8px;
+  background: var(--mac-surface-strong);
+  color: var(--mac-text);
+  font-size: 0.85rem;
+}
+
+.icon-select-search input:focus {
+  outline: none;
+  border-color: var(--mac-accent);
+}
+
 .icon-option {
   display: flex;
   align-items: center;
