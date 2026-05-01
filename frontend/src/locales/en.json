@@ -178,9 +178,8 @@
         "errors": "Failures",
         "errorHint": "Count & failure rate",
         "tokens": "Tokens moved",
-        "tokenHint": "Input + output + reasoning tokens",
-        "cache": "Cache reads",
-        "cacheHint": "Read hits across responses",
+        "cache": "Cache tokens",
+        "cacheHint": "Write + read",
         "costHint": "24h total cost",
         "todayScope": "Today · {date}"
       },

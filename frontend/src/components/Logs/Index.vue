@@ -22,7 +22,7 @@
             <span class="summary-card__breakdown-value">{{ item.value }}</span>
           </div>
         </div>
-        <div class="summary-card__hint">{{ card.hint }}</div>
+        <div v-if="card.hint" class="summary-card__hint">{{ card.hint }}</div>
       </article>
     </section>
 
@@ -513,7 +513,7 @@ const statsCards = computed(() => {
     {
       key: 'tokens',
       label: t('components.logs.summary.tokens'),
-      hint: t('components.logs.summary.tokenHint'),
+      hint: '',
       value: data ? formatNumber(totalTokens) : '—',
       breakdown: data
         ? [
@@ -526,7 +526,13 @@ const statsCards = computed(() => {
       key: 'cacheReads',
       label: t('components.logs.summary.cache'),
       hint: t('components.logs.summary.cacheHint'),
-      value: data ? formatNumber(data.cache_read_tokens) : '—',
+      value: data ? formatNumber(data.cache_read_tokens + data.cache_create_tokens) : '—',
+      breakdown: data
+        ? [
+            { label: t('components.logs.tokenLabels.cacheWrite'), value: formatNumber(data.cache_create_tokens) },
+            { label: t('components.logs.tokenLabels.cacheRead'), value: formatNumber(data.cache_read_tokens) },
+          ]
+        : null,
     },
     {
       key: 'cost',

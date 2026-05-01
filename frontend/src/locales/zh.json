@@ -179,9 +179,8 @@
         "errors": "失败次数",
         "errorHint": "数量与失败率",
         "tokens": "Token 流量",
-        "tokenHint": "输入 + 输出 + 推理 Tokens",
-        "cache": "缓存命中",
-        "cacheHint": "响应中的读取命中数",
+        "cache": "缓存 Tokens",
+        "cacheHint": "写入 + 读取",
         "costHint": "近 24 小时总花费",
         "todayScope": "今日 · {date}"
       },
