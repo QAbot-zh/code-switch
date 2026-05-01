@@ -150,6 +150,8 @@ func (ls *LogService) HeatmapStats(days int) ([]HeatmapStat, error) {
 		bucket.InputTokens += int64(input)
 		bucket.OutputTokens += int64(output)
 		bucket.ReasoningTokens += int64(reasoning)
+		bucket.CacheCreateTokens += int64(cacheCreate)
+		bucket.CacheReadTokens += int64(cacheRead)
 		usage := modelpricing.UsageSnapshot{
 			InputTokens:       input,
 			OutputTokens:      output,
@@ -497,12 +499,14 @@ func isNoSuchTableErr(err error) bool {
 }
 
 type HeatmapStat struct {
-	Day             string  `json:"day"`
-	TotalRequests   int64   `json:"total_requests"`
-	InputTokens     int64   `json:"input_tokens"`
-	OutputTokens    int64   `json:"output_tokens"`
-	ReasoningTokens int64   `json:"reasoning_tokens"`
-	TotalCost       float64 `json:"total_cost"`
+	Day               string  `json:"day"`
+	TotalRequests     int64   `json:"total_requests"`
+	InputTokens       int64   `json:"input_tokens"`
+	OutputTokens      int64   `json:"output_tokens"`
+	ReasoningTokens   int64   `json:"reasoning_tokens"`
+	CacheCreateTokens int64   `json:"cache_create_tokens"`
+	CacheReadTokens   int64   `json:"cache_read_tokens"`
+	TotalCost         float64 `json:"total_cost"`
 }
 
 type LogStats struct {

@@ -54,6 +54,8 @@
           "inputTokens": "Input tokens",
           "outputTokens": "Output tokens",
           "reasoningTokens": "Reasoning tokens",
+          "cacheCreateTokens": "Cache write",
+          "cacheReadTokens": "Cache read",
           "cost": "Cost"
         }
       },
@@ -179,7 +181,6 @@
         "errorHint": "Count & failure rate",
         "tokens": "Tokens moved",
         "cache": "Cache tokens",
-        "cacheHint": "Write + read",
         "costHint": "24h total cost",
         "todayScope": "Today · {date}"
       },

@@ -566,6 +566,8 @@ const usageTooltip = reactive({
   inputTokens: 0,
   outputTokens: 0,
   reasoningTokens: 0,
+  cacheCreateTokens: 0,
+  cacheReadTokens: 0,
   cost: 0,
 })
 
@@ -628,6 +630,16 @@ const usageTooltipMetrics = computed(() => [
     label: t('components.main.heatmap.metrics.reasoningTokens'),
     value: formatMetric(usageTooltip.reasoningTokens),
   },
+  {
+    key: 'cacheCreateTokens',
+    label: t('components.main.heatmap.metrics.cacheCreateTokens'),
+    value: formatMetric(usageTooltip.cacheCreateTokens),
+  },
+  {
+    key: 'cacheReadTokens',
+    label: t('components.main.heatmap.metrics.cacheReadTokens'),
+    value: formatMetric(usageTooltip.cacheReadTokens),
+  },
 ])
 
 const clamp = (value: number, min: number, max: number) => {
@@ -675,6 +687,8 @@ const showUsageTooltip = (day: UsageHeatmapDay, event: MouseEvent) => {
   usageTooltip.inputTokens = day.inputTokens
   usageTooltip.outputTokens = day.outputTokens
   usageTooltip.reasoningTokens = day.reasoningTokens
+  usageTooltip.cacheCreateTokens = day.cacheCreateTokens
+  usageTooltip.cacheReadTokens = day.cacheReadTokens
   usageTooltip.cost = day.cost
   const { width: tooltipWidth, height: tooltipHeight } = getTooltipSize()
   const { width: viewportWidth, height: viewportHeight } = viewportSize()

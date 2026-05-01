@@ -7,6 +7,8 @@ export type UsageHeatmapDay = {
 	inputTokens: number
 	outputTokens: number
 	reasoningTokens: number
+	cacheCreateTokens: number
+	cacheReadTokens: number
 	cost: number
 	intensity: number
 }
@@ -72,6 +74,8 @@ type StatBucket = {
 	inputTokens: number
 	outputTokens: number
 	reasoningTokens: number
+	cacheCreateTokens: number
+	cacheReadTokens: number
 	cost: number
 }
 
@@ -80,6 +84,8 @@ const emptyBucket = (): StatBucket => ({
 	inputTokens: 0,
 	outputTokens: 0,
 	reasoningTokens: 0,
+	cacheCreateTokens: 0,
+	cacheReadTokens: 0,
 	cost: 0,
 })
 
@@ -107,6 +113,8 @@ const buildColumns = (
 					inputTokens: bucket.inputTokens,
 					outputTokens: bucket.outputTokens,
 					reasoningTokens: bucket.reasoningTokens,
+					cacheCreateTokens: bucket.cacheCreateTokens,
+					cacheReadTokens: bucket.cacheReadTokens,
 					cost: bucket.cost,
 					intensity: intensityForCount(bucket.requests, maxCount),
 				})
@@ -144,6 +152,8 @@ export const buildUsageHeatmapMatrix = (
 			inputTokens: Number(stat.input_tokens) || 0,
 			outputTokens: Number(stat.output_tokens) || 0,
 			reasoningTokens: Number(stat.reasoning_tokens) || 0,
+			cacheCreateTokens: Number(stat.cache_create_tokens) || 0,
+			cacheReadTokens: Number(stat.cache_read_tokens) || 0,
 			cost: Number(stat.total_cost) || 0,
 		}
 		if (bucket) {
@@ -151,6 +161,8 @@ export const buildUsageHeatmapMatrix = (
 			bucket.inputTokens += update.inputTokens
 			bucket.outputTokens += update.outputTokens
 			bucket.reasoningTokens += update.reasoningTokens
+			bucket.cacheCreateTokens += update.cacheCreateTokens
+			bucket.cacheReadTokens += update.cacheReadTokens
 			bucket.cost += update.cost
 		} else {
 			statsMap.set(key, { ...update })
