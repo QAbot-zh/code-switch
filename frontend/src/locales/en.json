@@ -93,6 +93,8 @@
       "providers": {
         "requests": "Requests",
         "tokens": "Tokens",
+        "inputShort": "in",
+        "outputShort": "out",
         "cost": "Cost",
         "successRate": "Success rate",
         "loading": "Refreshing...",
@@ -176,7 +178,7 @@
         "errors": "Failures",
         "errorHint": "Count & failure rate",
         "tokens": "Tokens moved",
-        "tokenHint": "Input + output tokens",
+        "tokenHint": "Input + output + reasoning tokens",
         "cache": "Cache reads",
         "cacheHint": "Read hits across responses",
         "costHint": "24h total cost",

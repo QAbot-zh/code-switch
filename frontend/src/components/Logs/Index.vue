@@ -16,6 +16,12 @@
       <article v-for="card in statsCards" :key="card.key" class="summary-card">
         <div class="summary-card__label">{{ card.label }}</div>
         <div class="summary-card__value">{{ card.value }}</div>
+        <div v-if="card.breakdown" class="summary-card__breakdown">
+          <div v-for="item in card.breakdown" :key="item.label" class="summary-card__breakdown-row">
+            <span class="summary-card__breakdown-label">{{ item.label }}</span>
+            <span class="summary-card__breakdown-value">{{ item.value }}</span>
+          </div>
+        </div>
         <div class="summary-card__hint">{{ card.hint }}</div>
       </article>
     </section>
@@ -509,6 +515,12 @@ const statsCards = computed(() => {
       label: t('components.logs.summary.tokens'),
       hint: t('components.logs.summary.tokenHint'),
       value: data ? formatNumber(totalTokens) : '—',
+      breakdown: data
+        ? [
+            { label: t('components.logs.tokenLabels.input'), value: formatNumber(data.input_tokens) },
+            { label: t('components.logs.tokenLabels.output'), value: formatNumber(data.output_tokens) },
+          ]
+        : null,
     },
     {
       key: 'cacheReads',
@@ -608,6 +620,30 @@ onUnmounted(() => {
   color: #94a3b8;
 }
 
+.summary-card__breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.8rem;
+  color: #475569;
+}
+
+.summary-card__breakdown-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.summary-card__breakdown-label {
+  color: #64748b;
+}
+
+.summary-card__breakdown-value {
+  font-variant-numeric: tabular-nums;
+  color: #0f172a;
+  font-weight: 500;
+}
+
 html.dark .summary-card {
   border-color: rgba(255, 255, 255, 0.12);
   background: radial-gradient(circle at top, rgba(148, 163, 184, 0.2), rgba(15, 23, 42, 0.35));
@@ -623,6 +659,18 @@ html.dark .summary-card__value {
 
 html.dark .summary-card__hint {
   color: rgba(186, 194, 210, 0.8);
+}
+
+html.dark .summary-card__breakdown {
+  color: rgba(203, 213, 225, 0.85);
+}
+
+html.dark .summary-card__breakdown-label {
+  color: rgba(148, 163, 184, 0.9);
+}
+
+html.dark .summary-card__breakdown-value {
+  color: rgba(248, 250, 252, 0.95);
 }
 
 @media (max-width: 768px) {

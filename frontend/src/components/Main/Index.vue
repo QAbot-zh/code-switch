@@ -923,14 +923,17 @@ const providerStatDisplay = (providerName: string): ProviderStatDisplay => {
   if (!stat) {
     return { state: 'empty', message: t('components.main.providers.noData') }
   }
-  const totalTokens = stat.input_tokens + stat.output_tokens
+  const totalTokens = stat.input_tokens + stat.output_tokens + stat.reasoning_tokens
   const successRateValue = Number.isFinite(stat.success_rate) ? clamp(stat.success_rate, 0, 1) : null
   const successRateLabel = successRateValue !== null ? formatSuccessRateLabel(successRateValue) : ''
   const successRateClass = successRateValue !== null ? successRateClassName(successRateValue) : ''
+  const tokensLabel = `${t('components.main.providers.tokens')}: ${formatMetric(totalTokens)} (${t(
+    'components.main.providers.inputShort',
+  )}: ${formatMetric(stat.input_tokens)} · ${t('components.main.providers.outputShort')}: ${formatMetric(stat.output_tokens)})`
   return {
     state: 'ready',
     requests: `${t('components.main.providers.requests')}: ${formatMetric(stat.total_requests)}`,
-    tokens: `${t('components.main.providers.tokens')}: ${formatMetric(totalTokens)}`,
+    tokens: tokensLabel,
     cost: `${t('components.main.providers.cost')}: ${currencyFormatter.value.format(Math.max(stat.cost_total, 0))}`,
     successRateLabel,
     successRateClass,
