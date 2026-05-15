@@ -253,6 +253,35 @@
         "clear": "清除选择",
         "reupload": "重新上传",
         "missingDefault": "未检测到 cc-switch 配置文件，可手动上传 JSON 进行导入"
+      },
+      "pricing": {
+        "title": "模型价格数据",
+        "label": "数据来源：{source}",
+        "subLabel": "{count} 个模型 · 更新于 {updatedAt}",
+        "subLabelNever": "{count} 个模型",
+        "source": {
+          "builtin": "内置",
+          "upstream": "上游",
+          "custom": "自定义"
+        },
+        "never": "未更新",
+        "buttons": {
+          "update": "拉取最新",
+          "updating": "正在拉取...",
+          "import": "导入 JSON",
+          "reset": "恢复内置"
+        },
+        "uploadTitle": "选择价格 JSON 文件",
+        "confirmReset": "确认恢复内置价格数据并丢弃本地覆盖？",
+        "toast": {
+          "updateSuccess": "已从上游更新价格数据（{count} 个模型）",
+          "importSuccess": "已导入价格数据（{count} 个模型）",
+          "resetSuccess": "已恢复内置价格数据",
+          "fetchError": "拉取上游价格失败",
+          "importError": "导入价格 JSON 失败",
+          "resetError": "恢复内置价格失败",
+          "invalidData": "价格数据无效，已保留原版本"
+        }
       }
     },
     "mcp": {

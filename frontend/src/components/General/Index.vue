@@ -15,6 +15,13 @@ import {
   type ConfigImportResult,
   type ConfigImportStatus,
 } from '../../services/configImport'
+import {
+  fetchPricingStatus,
+  updatePricingFromUpstream,
+  updatePricingFromFile,
+  resetPricingToBuiltin,
+  type PricingStatus,
+} from '../../services/modelPricing'
 import { showToast } from '../../utils/toast'
 import BaseButton from '../common/BaseButton.vue'
 
@@ -28,6 +35,9 @@ const saveBusy = ref(false)
 const importStatus = ref<ConfigImportStatus | null>(null)
 const customImportStatus = ref<ConfigImportStatus | null>(null)
 const importBusy = ref(false)
+const pricingStatus = ref<PricingStatus | null>(null)
+const pricingBusy = ref(false)
+const pricingAction = ref<'update' | 'import' | 'reset' | ''>('')
 
 const goBack = () => {
   router.push('/')
@@ -71,6 +81,7 @@ const persistAppSettings = async () => {
 onMounted(() => {
   void loadAppSettings()
   void loadImportStatus()
+  void loadPricingStatus()
 })
 
 const loadImportStatus = async () => {
@@ -244,6 +255,127 @@ const handleSecondaryImportAction = async () => {
     await handleUploadClick()
   }
 }
+
+const loadPricingStatus = async () => {
+  try {
+    pricingStatus.value = await fetchPricingStatus()
+  } catch (error) {
+    console.error('failed to load pricing status', error)
+    pricingStatus.value = null
+  }
+}
+
+const formatPricingDate = (value: string): string => {
+  if (!value) return ''
+  const parsed = new Date(value)
+  if (Number.isNaN(parsed.getTime())) return value
+  return parsed.toLocaleString()
+}
+
+const pricingSourceLabel = computed(() => {
+  const source = pricingStatus.value?.source || 'builtin'
+  const key = `components.general.pricing.source.${source}`
+  const translated = t(key)
+  return translated === key ? source : translated
+})
+
+const pricingMainLabel = computed(() =>
+  t('components.general.pricing.label', { source: pricingSourceLabel.value }),
+)
+
+const pricingSubLabel = computed(() => {
+  const count = pricingStatus.value?.model_count ?? 0
+  const updatedAt = formatPricingDate(pricingStatus.value?.updated_at || '')
+  if (!updatedAt) {
+    return t('components.general.pricing.subLabelNever', { count })
+  }
+  return t('components.general.pricing.subLabel', { count, updatedAt })
+})
+
+const pricingUpdateLabel = computed(() =>
+  pricingBusy.value && pricingAction.value === 'update'
+    ? t('components.general.pricing.buttons.updating')
+    : t('components.general.pricing.buttons.update'),
+)
+
+const handlePricingUpdate = async () => {
+  if (pricingBusy.value) return
+  pricingBusy.value = true
+  pricingAction.value = 'update'
+  try {
+    const status = await updatePricingFromUpstream()
+    pricingStatus.value = status
+    showToast(
+      t('components.general.pricing.toast.updateSuccess', { count: status.model_count }),
+    )
+  } catch (error) {
+    console.error('failed to update pricing', error)
+    showToast(t('components.general.pricing.toast.fetchError'), 'error')
+  } finally {
+    pricingBusy.value = false
+    pricingAction.value = ''
+  }
+}
+
+const handlePricingImport = async () => {
+  if (pricingBusy.value) return
+  let selectedPath = ''
+  try {
+    const selection = await Dialogs.OpenFile({
+      Title: t('components.general.pricing.uploadTitle'),
+      CanChooseFiles: true,
+      CanChooseDirectories: false,
+      AllowsOtherFiletypes: false,
+      Filters: [
+        {
+          DisplayName: 'JSON (*.json)',
+          Pattern: '*.json',
+        },
+      ],
+      AllowsMultipleSelection: false,
+    })
+    selectedPath = Array.isArray(selection) ? selection[0] : selection
+  } catch (error) {
+    console.error('failed to open pricing JSON', error)
+    showToast(t('components.general.pricing.toast.importError'), 'error')
+    return
+  }
+  if (!selectedPath) return
+  pricingBusy.value = true
+  pricingAction.value = 'import'
+  try {
+    const status = await updatePricingFromFile(selectedPath)
+    pricingStatus.value = status
+    showToast(
+      t('components.general.pricing.toast.importSuccess', { count: status.model_count }),
+    )
+  } catch (error) {
+    console.error('failed to import pricing', error)
+    showToast(t('components.general.pricing.toast.importError'), 'error')
+  } finally {
+    pricingBusy.value = false
+    pricingAction.value = ''
+  }
+}
+
+const handlePricingReset = async () => {
+  if (pricingBusy.value) return
+  const confirmed = window.confirm(t('components.general.pricing.confirmReset'))
+  if (!confirmed) return
+  pricingBusy.value = true
+  pricingAction.value = 'reset'
+  try {
+    const status = await resetPricingToBuiltin()
+    pricingStatus.value = status
+    showToast(t('components.general.pricing.toast.resetSuccess'))
+  } catch (error) {
+    console.error('failed to reset pricing', error)
+    showToast(t('components.general.pricing.toast.resetError'), 'error')
+  } finally {
+    pricingBusy.value = false
+    pricingAction.value = ''
+  }
+}
 </script>
 
 <template>
@@ -338,6 +470,43 @@ const handleSecondaryImportAction = async () => {
             </div>
           </ListItem>
 
+        </div>
+      </section>
+
+      <section>
+        <h2 class="mac-section-title">{{ $t('components.general.pricing.title') }}</h2>
+        <div class="mac-panel">
+          <ListItem :label="pricingMainLabel" :sub-label="pricingSubLabel">
+            <div class="import-actions">
+              <BaseButton
+                size="sm"
+                variant="outline"
+                type="button"
+                :disabled="pricingBusy"
+                @click="handlePricingUpdate"
+              >
+                {{ pricingUpdateLabel }}
+              </BaseButton>
+              <BaseButton
+                size="sm"
+                variant="outline"
+                type="button"
+                :disabled="pricingBusy"
+                @click="handlePricingImport"
+              >
+                {{ $t('components.general.pricing.buttons.import') }}
+              </BaseButton>
+              <BaseButton
+                size="sm"
+                variant="outline"
+                type="button"
+                :disabled="pricingBusy || pricingStatus?.source === 'builtin'"
+                @click="handlePricingReset"
+              >
+                {{ $t('components.general.pricing.buttons.reset') }}
+              </BaseButton>
+            </div>
+          </ListItem>
         </div>
       </section>
 

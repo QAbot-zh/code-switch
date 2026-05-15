@@ -18,12 +18,23 @@ var (
 	nameReplacer   = strings.NewReplacer("-", "", "_", "", ".", "", ":", "", "/", "", " ", "")
 )
 
+// SourceMeta 描述当前定价数据的来源元信息。
+type SourceMeta struct {
+	Source       string `json:"source"`
+	UpdatedAt    string `json:"updated_at"`
+	FetchedURL   string `json:"fetched_url,omitempty"`
+	ImportedPath string `json:"imported_path,omitempty"`
+	ModelCount   int    `json:"model_count"`
+}
+
 // Service 提供模型价格相关的计算能力。
 type Service struct {
+	mu           sync.RWMutex
 	pricingMap   map[string]*PricingEntry
 	normalized   map[string]string
 	ephemeral1h  map[string]float64
 	longContexts map[string]LongContextPricing
+	meta         SourceMeta
 }
 
 // PricingEntry 映射 JSON 内的字段。
@@ -73,6 +84,11 @@ type LongContextPricing struct {
 	Output float64
 }
 
+// BuiltinPricingBytes 返回编译期内嵌的 JSON 字节，用于 PricingService 复位。
+func BuiltinPricingBytes() []byte {
+	return pricingFile
+}
+
 // DefaultService 返回单例。
 func DefaultService() (*Service, error) {
 	defaultOnce.Do(func() {
@@ -83,9 +99,27 @@ func DefaultService() (*Service, error) {
 
 // NewService 从嵌入的 JSON 创建服务实例。
 func NewService() (*Service, error) {
+	pricing, normalized, err := parsePricing(pricingFile)
+	if err != nil {
+		return nil, err
+	}
+	return &Service{
+		pricingMap:   pricing,
+		normalized:   normalized,
+		ephemeral1h:  buildEphemeral1hPricing(),
+		longContexts: buildLongContextPricing(),
+		meta: SourceMeta{
+			Source:     "builtin",
+			ModelCount: len(pricing),
+		},
+	}, nil
+}
+
+// parsePricing 把 JSON 字节解析成内部映射。
+func parsePricing(data []byte) (map[string]*PricingEntry, map[string]string, error) {
 	raw := make(map[string]PricingEntry)
-	if err := json.Unmarshal(pricingFile, &raw); err != nil {
-		return nil, fmt.Errorf("parse pricing file: %w", err)
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return nil, nil, fmt.Errorf("parse pricing file: %w", err)
 	}
 	pricing := make(map[string]*PricingEntry, len(raw))
 	normalized := make(map[string]string, len(raw))
@@ -98,12 +132,42 @@ func NewService() (*Service, error) {
 			normalized[norm] = key
 		}
 	}
-	return &Service{
-		pricingMap:   pricing,
-		normalized:   normalized,
-		ephemeral1h:  buildEphemeral1hPricing(),
-		longContexts: buildLongContextPricing(),
-	}, nil
+	return pricing, normalized, nil
+}
+
+// ReloadFromBytes 用新的 JSON 数据替换内部映射，校验失败时不修改任何状态。
+func (s *Service) ReloadFromBytes(data []byte, meta SourceMeta) error {
+	if s == nil {
+		return fmt.Errorf("nil service")
+	}
+	pricing, normalized, err := parsePricing(data)
+	if err != nil {
+		return err
+	}
+	if meta.ModelCount == 0 {
+		meta.ModelCount = len(pricing)
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.pricingMap = pricing
+	s.normalized = normalized
+	s.meta = meta
+	return nil
+}
+
+// ResetToBuiltin 重新加载内嵌 JSON 并把元信息重置为 builtin。
+func (s *Service) ResetToBuiltin() error {
+	return s.ReloadFromBytes(pricingFile, SourceMeta{Source: "builtin"})
+}
+
+// Snapshot 返回当前来源元信息的快照。
+func (s *Service) Snapshot() SourceMeta {
+	if s == nil {
+		return SourceMeta{}
+	}
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.meta
 }
 
 // CalculateCost 根据模型与 token 用量返回费用明细（美元）。
@@ -111,12 +175,14 @@ func (s *Service) CalculateCost(model string, usage UsageSnapshot) CostBreakdown
 	if s == nil || model == "" {
 		return CostBreakdown{}
 	}
-	entry, hasPricing := s.getPricing(model)
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	entry, hasPricing := s.getPricingLocked(model)
 	breakdown := CostBreakdown{HasPricing: hasPricing}
 	if entry == nil && !strings.Contains(strings.ToLower(model), "[1m]") {
 		return breakdown
 	}
-	longTier, useLong := s.longContextTier(model, usage)
+	longTier, useLong := s.longContextTierLocked(model, usage)
 	if entry == nil {
 		entry = &PricingEntry{}
 	}
@@ -130,7 +196,7 @@ func (s *Service) CalculateCost(model string, usage UsageSnapshot) CostBreakdown
 	}
 	cacheCreateTokens, cache1hTokens := resolveCacheTokens(usage)
 	cache5mCost := float64(cacheCreateTokens) * entry.CacheCreationInputTokenCost
-	cache1hCost := float64(cache1hTokens) * s.getEphemeral1hPricing(model)
+	cache1hCost := float64(cache1hTokens) * s.getEphemeral1hPricingLocked(model)
 	breakdown.Ephemeral5mCost = cache5mCost
 	breakdown.Ephemeral1hCost = cache1hCost
 	breakdown.CacheCreateCost = cache5mCost + cache1hCost
@@ -142,7 +208,7 @@ func (s *Service) CalculateCost(model string, usage UsageSnapshot) CostBreakdown
 	return breakdown
 }
 
-func (s *Service) getPricing(model string) (*PricingEntry, bool) {
+func (s *Service) getPricingLocked(model string) (*PricingEntry, bool) {
 	if model == "" {
 		return nil, false
 	}
@@ -175,7 +241,7 @@ func (s *Service) getPricing(model string) (*PricingEntry, bool) {
 	return nil, false
 }
 
-func (s *Service) longContextTier(model string, usage UsageSnapshot) (LongContextPricing, bool) {
+func (s *Service) longContextTierLocked(model string, usage UsageSnapshot) (LongContextPricing, bool) {
 	totalInput := usage.InputTokens + usage.CacheCreateTokens + usage.CacheReadTokens
 	if strings.Contains(strings.ToLower(model), "[1m]") && totalInput > 200000 && len(s.longContexts) > 0 {
 		if tier, ok := s.longContexts[model]; ok {
@@ -188,7 +254,7 @@ func (s *Service) longContextTier(model string, usage UsageSnapshot) (LongContex
 	return LongContextPricing{}, false
 }
 
-func (s *Service) getEphemeral1hPricing(model string) float64 {
+func (s *Service) getEphemeral1hPricingLocked(model string) float64 {
 	if price, ok := s.ephemeral1h[model]; ok {
 		return price
 	}

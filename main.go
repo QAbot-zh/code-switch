@@ -77,6 +77,10 @@ func main() {
 	mcpService := services.NewMCPService()
 	skillService := services.NewSkillService()
 	importService := services.NewImportService(providerService, mcpService)
+	pricingService := services.NewPricingService()
+	if err := pricingService.Start(); err != nil {
+		log.Printf("pricing service start error: %v", err)
+	}
 	dockService := dock.New()
 	versionService := NewVersionService()
 
@@ -106,6 +110,7 @@ func main() {
 			application.NewService(mcpService),
 			application.NewService(skillService),
 			application.NewService(importService),
+			application.NewService(pricingService),
 			application.NewService(dockService),
 			application.NewService(versionService),
 		},
