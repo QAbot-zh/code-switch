@@ -260,7 +260,7 @@
         "subLabelNever": "{count} models",
         "source": {
           "builtin": "Bundled",
-          "upstream": "Upstream",
+          "upstream": "litellm repository",
           "custom": "Custom"
         },
         "never": "never",

@@ -261,7 +261,7 @@
         "subLabelNever": "{count} 个模型",
         "source": {
           "builtin": "内置",
-          "upstream": "上游",
+          "upstream": "litellm 仓库",
           "custom": "自定义"
         },
         "never": "未更新",
