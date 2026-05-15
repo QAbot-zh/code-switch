@@ -252,6 +252,35 @@
         "clear": "Clear selection",
         "reupload": "Upload another JSON",
         "missingDefault": "No cc-switch config detected. Upload a JSON manually to import."
+      },
+      "pricing": {
+        "title": "Model pricing data",
+        "label": "Source: {source}",
+        "subLabel": "{count} models · updated {updatedAt}",
+        "subLabelNever": "{count} models",
+        "source": {
+          "builtin": "Bundled",
+          "upstream": "litellm repository",
+          "custom": "Custom"
+        },
+        "never": "never",
+        "buttons": {
+          "update": "Update from upstream",
+          "updating": "Updating...",
+          "import": "Import JSON",
+          "reset": "Restore bundled"
+        },
+        "uploadTitle": "Select pricing JSON file",
+        "confirmReset": "Restore the bundled pricing data and discard the local override?",
+        "toast": {
+          "updateSuccess": "Pricing data updated from upstream ({count} models)",
+          "importSuccess": "Pricing data imported ({count} models)",
+          "resetSuccess": "Restored bundled pricing data",
+          "fetchError": "Failed to fetch upstream pricing",
+          "importError": "Failed to import pricing JSON",
+          "resetError": "Failed to restore bundled data",
+          "invalidData": "Invalid pricing data, kept previous version"
+        }
       }
     },
     "mcp": {
